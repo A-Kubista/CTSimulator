@@ -7,9 +7,9 @@ package ctsimulator;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.SwingWorker;
 
 /**
  *
@@ -222,8 +222,10 @@ public class MainWindow extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         String path = fileText.getText();
         try {
-            BufferedImage img = ImageIO.read(new File(path));
-            if(img.getWidth()!=img.getHeight()) throw new Exception("Incorrect image size - "+img.getHeight()+"x"+img.getWidth());
+            FileInputStream fos = new FileInputStream(path);
+            BufferedImage img = ImageIO.read(fos);
+            fos.close();
+            //if(img.getWidth()!=img.getHeight()) throw new Exception("Incorrect image size - "+img.getHeight()+"x"+img.getWidth());
             ct.setR((int)(img.getHeight()/2));
             java.awt.EventQueue.invokeLater(() -> {
                 ResultWindow res = new ResultWindow(img,ct.clone());

@@ -82,12 +82,14 @@ public class CT {
     private BufferedImage grayImg;
     /** aktualny sinogram */
     private BufferedImage sinogramImg;
-    /** aktualny przefiltrowany sinogram */
+    /** aktualny przefiltrowany sinogram (wizualizacja) */
     private BufferedImage filteredSinogramImg;
     /** aktualny rezultat wygenerowany na podstawie sinogramu */
     private BufferedImage resultImg;
     /** aktualny rezultat wygenerowany na podstawie przefiltrowanego sinogramu */
     private BufferedImage filteredResultImg;
+    /** tablica zawierająca dane przefiltrowanego sinogramu*/
+    private double[][] filteredSinogramArr;
     /** różnica między oryginalnym obrazem a niefiltrowanym rezultatem */
     private double resultDiff = 0.0;
     /** różnica między oryginalnym obrazem a filtrowanym rezultatem */
@@ -190,7 +192,9 @@ public class CT {
         if(i>this.maxIterations) i = this.maxIterations;
         generateSinogram(i, measurement, sinogram, onlyResult);
         generateResult(i,sinogram,result,onlyResult,false);
-        
+        filterSinogram(i,sinogram,fSinogram,onlyResult);
+        //generateResult(i,fSinogram,fResult,onlyResult,true);
+        generateFilteredResult(i,fSinogram,fResult,onlyResult);
         
         this.resultDiff = countDiff(this.grayImg,this.resultImg);
         this.filteredResultDiff = countDiff(this.grayImg,this.filteredResultImg);
@@ -207,12 +211,10 @@ public class CT {
      * @param onlyResult pokazywany ma być jedynie końcowy rezultat sinogramu), bez kroków pośrednich
      */
     private void generateSinogram(int n, ImagePanel measurement, ImagePanel sinogram, boolean onlyResult){
-        
-            BufferedImage measurementImg = createCopy(this.grayImg);
             for(int i = 0;i<n;i++){
                 Point src = this.emiters.get(i);
                 List<Point> dests = this.sensors.get(i);
-                measurementImg = createCopy(this.grayImg);
+                 BufferedImage measurementImg = createCopy(this.grayImg);
                 int iterator = 0;
                 for(Point dest : dests){
                     int sum = 0;
@@ -380,21 +382,159 @@ public class CT {
                     
                 }
                 if(!onlyResult){
-                    sinogram.refreshImage(sin);
-                    result.refreshImage(createImage(array, w, h, max, false));
+                    if(sinogram!=null) sinogram.refreshImage(sin);
+                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false));
                 }
             }
         
         if(fSinogram){
-            this.filteredResultImg = createImage(array, w, h, max, false);
-            result.refreshImage(this.filteredResultImg);
-            sinogram.refreshImage(this.filteredSinogramImg);
+            this.filteredResultImg = createImage(array, w, h, max, true);
+            if(result!=null) result.refreshImage(this.filteredResultImg);
+            if(sinogram!=null) sinogram.refreshImage(this.filteredSinogramImg);
         }
         else{
             this.resultImg = createImage(array, w, h, max, true);
-            result.refreshImage(this.resultImg);
-            sinogram.refreshImage(this.sinogramImg);
+            if(result!=null) result.refreshImage(this.resultImg);
+            if(sinogram!=null) sinogram.refreshImage(this.sinogramImg);
         }
+    }
+    
+    private void filterSinogram(int n, ImagePanel sinogram, ImagePanel fSinogram, boolean onlyResult){
+        int size = 9;
+        double[] h = new double[2*size+1];
+        for(int k=-size;k<=size;k++){
+            h[k+size] = (k==0) ? 1.0 : ((k%2==0) ? 0 : (-4.0/(Math.pow(k*Math.PI,2))));
+            //System.out.println(k+": "+h[k+size]);
+        }
+        
+        this.filteredSinogramArr = new double[this.numberOfSensors][this.maxIterations];
+        for(double[] r: this.filteredSinogramArr){
+            for(double f: r){
+                f = 0;
+            }
+        }
+        double max = -1.0;
+        double min = 1.0;
+        
+        for(int y=0;y<n;y++){
+            BufferedImage sin = createCopy(this.sinogramImg);
+            for(int x=0;x<this.numberOfSensors;x++){
+                sin.setRGB(x, y, colorToRGB(200,0,0));
+                if(x>size && x<this.numberOfSensors-size){
+                    double sum = 0.0;
+                    for(int k = -size;k<=size;k++){
+                        sum += ((double)(new Color(this.sinogramImg.getRGB(x+k, y))).getRed())/255.0*h[k+size];
+                    }
+                    this.filteredSinogramArr[x][y] = sum;
+                    if(sum<min) min = sum;
+                    if(sum>max) max = sum;
+                }
+            }
+            if(fSinogram!=null && !onlyResult)fSinogram.refreshImage(createSinogram(this.filteredSinogramArr,this.numberOfSensors,this.maxIterations,max,min));
+            if(sinogram!=null && !onlyResult) sinogram.refreshImage(sin);
+        }
+        this.filteredSinogramImg = createSinogram(this.filteredSinogramArr,this.numberOfSensors,this.maxIterations,max,min);
+        if(fSinogram!=null)fSinogram.refreshImage(this.filteredSinogramImg);
+        if(sinogram!=null) sinogram.refreshImage(this.sinogramImg);
+    }
+    
+    /**
+     * Wykonywanie pierwszych n iteracji generowania rezultatu z sinogramu
+     * @param n liczba iteracji
+     * @param sinogram panel, na który nanoszona jest symulacja 
+     * @param result panel, na który nanoszony ma być rezultat
+     * @param onlyResult pokazywany ma być jedynie końcowy rezultat, bez kroków pośrednich
+     */
+    private void generateFilteredResult(int n, ImagePanel sinogram, ImagePanel result, boolean onlyResult){
+        int h = resultImg.getHeight();
+        int w = resultImg.getWidth();
+            
+        int[][] array = new int[w][h];
+        for(int[] r: array){
+            for(int f: r){
+                f = 0;
+            }
+        }
+        int max = -1;
+            
+        for(int i = 0;i<n;i++){
+            Point src = this.emiters.get(i);
+            BufferedImage sin = createCopy(this.filteredSinogramImg);
+            for(int j = 0;j<this.numberOfSensors;j++){
+                Point dest = this.sensors.get(i).get(j);
+                double f = this.filteredSinogramArr[j][i]*255.0;
+                sin.setRGB(j, i, colorToRGB(200,0,0));
+
+                //Bresenham's line algorithm
+                //https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
+                    int x1 = src.getX();
+                    int y1 = src.getY();
+                    int x2 = dest.getX();
+                    int y2 = dest.getY();
+
+                    //System.out.println(x1+"\t"+y1+"\t"+x2+"\t"+y2);
+
+                    boolean steep = (Math.abs(y2 - y1) > Math.abs(x2 - x1));
+                    if(steep){
+                        //swap x and y
+                        int tmp = x1;
+                        x1 = y1;
+                        y1 = tmp;
+                        tmp = x2;
+                        x2 = y2;
+                        y2 = tmp;
+                    }
+
+                    if(x1 > x2){
+                        //swap xs and ys
+                        int tmp = x1;
+                        x1 = x2;
+                        x2 = tmp;
+                        tmp = y1;
+                        y1 = y2;
+                        y2 = tmp;
+                    }
+
+                    int dx = x2 - x1;
+                    int dy = Math.abs(y2 - y1);
+
+                    float error = dx / 2.0f;
+                    int ystep = (y1 < y2) ? 1 : -1;
+                    int y = y1;
+                    int maxX = x2;
+
+                    for(int x=x1; x<maxX; x++)
+                    {
+                        if(x>=h) x--;
+                        if(y>=h) y--;
+                        if(steep){
+                            array[y][x] += f;
+                            if(array[y][x]>max) max = array[y][x];
+                        }
+                        else{
+                            array[x][y] += f;
+                            if(array[x][y]>max) max = array[x][y];
+                        }
+
+                        error = error - dy;
+                        if(error < 0)
+                        {
+                            y += ystep;
+                            error += dx;
+                        }
+                    }
+                    
+                }
+                if(!onlyResult){
+                    if(sinogram!=null) sinogram.refreshImage(sin);
+                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false));
+                }
+            }
+        
+        
+        this.filteredResultImg = createImage(array, w, h, max, false);
+        if(result!=null) result.refreshImage(this.filteredResultImg);
+        if(sinogram!=null) sinogram.refreshImage(this.filteredSinogramImg);
     }
     
     /**
@@ -434,7 +574,7 @@ public class CT {
      * @param angle
      * @return kąt z przedziału <0.0;360.0)
      */
-    private double normalizeAngle(double angle){
+    private static double normalizeAngle(double angle){
         if(angle<0.0) angle+=360.0;
         if(angle>=360.0) angle-=360.0;
         return angle;
@@ -474,6 +614,17 @@ public class CT {
         return sum/iter*100.0;
     }
     
+    public static BufferedImage createSinogram(double[][] arr, int w, int h, double max, double min){
+        BufferedImage im = createBackground(h,w);
+        for(int x=0;x<w;x++){
+            for(int y=0;y<h;y++){
+                double f = (arr[x][y]< 0.0 ? 0.0 : arr[x][y]/max)*255.0;
+                im.setRGB(x,y,greyToRGB((int)f));
+            }
+        }
+        return im;
+    }
+    
     public static BufferedImage createImage(int[][] arr, int w, int h, int max, boolean withNormalization){
         BufferedImage im = createBackground(h,w);
         int minColor = 255;
@@ -497,28 +648,17 @@ public class CT {
     }
     
     public static void imageNormalization(BufferedImage img, int max, int min){
-        System.out.println(max+" "+min);
-        min = 75;
         int h = img.getHeight();
         int w = img.getWidth();
+        int r = w/2;
+        int size =(int) (Math.PI*Math.pow(r,2));
         for(int x=0;x<w;x++){
             for(int y=0;y<h;y++){
-                int color = (new Color(img.getRGB(x,y))).getRed();
-                color = (int)(((double)(color - min))/((double)(max-min))*255.0);
-                if(color<0) color = 0;
-                if(color>255) color = 255;
-                img.setRGB(x, y, greyToRGB(color));
+                
             }
         }
     }
     
-    /**
-     * 
-     * @param r
-     * @param g
-     * @param b
-     * @return 
-     */
     private static int colorToRGB(int r, int g, int b) {
         int newPixel = 255;
         newPixel = newPixel << 8;
@@ -530,11 +670,6 @@ public class CT {
         return newPixel;
     }
     
-    /**
-     * 
-     * @param gray
-     * @return 
-     */
     private static int greyToRGB(int gray) {
         return colorToRGB(gray,gray,gray);
     }
@@ -548,12 +683,6 @@ public class CT {
         return b;
     }
     
-    /**
-     * 
-     * @param h
-     * @param w
-     * @return 
-     */
     private static BufferedImage createBackground(int h, int w){
         BufferedImage tmp = new BufferedImage(w,h,BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = tmp.createGraphics();
@@ -562,12 +691,6 @@ public class CT {
         return tmp;
     }
     
-    /**
-     * 
-     * @param background
-     * @param img
-     * @return 
-     */
     private static BufferedImage drawImage(BufferedImage background, BufferedImage img){
         Graphics2D graphic = background.createGraphics();
         graphic.drawImage(img,(background.getWidth()-img.getWidth())/2,(background.getHeight()-img.getHeight())/2, null);
