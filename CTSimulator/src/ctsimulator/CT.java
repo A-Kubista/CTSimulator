@@ -78,11 +78,11 @@ public class CT {
     /** 1/2 rozmiaru kernela filtrującego sinogram*/
     private int sinogramKernel = 9;
     /** 1/2 rozmiaru kernela filtrującego rezultat*/
-    private int smoothKernel = 4;
+    private int smoothKernel = 2;
     /** dolna (procentowa) granica odcięcia koloru w rezultacie*/
-    private double contrastDown = 0.2;
+    private double contrastDown = 0.25;
     /** górna (procentowa) granica odcięcia koloru w rezultacie*/
-    private double contrastUp = 0.995;
+    private double contrastUp = 0.998;
     
     /** oryginalny obraz umieszczony na czarnym tle */
     private BufferedImage orginalImg;
@@ -248,10 +248,10 @@ public class CT {
         this.filteredResultDiff = countDiff(this.grayImg,this.filteredResultImg);
         this.resultSmoothDiff = countDiff(this.grayImg,this.resultSmoothImg);
         this.filteredResultSmoothDiff = countDiff(this.grayImg,this.filteredResultSmoothImg);
-        System.out.println("Result: "+this.resultDiff+"%");
-        System.out.println("Filtered result: "+this.filteredResultDiff+"%");
-        System.out.println("Result - smooth: "+this.resultSmoothDiff+"%");
-        System.out.println("Filtered result - smooth: "+this.filteredResultSmoothDiff+"%");
+        System.out.println("Result: "+this.resultDiff);
+        System.out.println("Result - smooth: "+this.resultSmoothDiff);
+        System.out.println("Filtered result: "+this.filteredResultDiff);
+        System.out.println("Filtered result - smooth: "+this.filteredResultSmoothDiff);
     }
     
     /**
@@ -434,12 +434,12 @@ public class CT {
                 }
                 if(!onlyResult){
                     if(sinogram!=null) sinogram.refreshImage(sin);
-                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, 0, 0));
+                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, 0, 0, 0));
                 }
             }
 
-        this.resultImg = createImage(array, w, h, max, false, 0, 0);
-        this.resultSmoothImg = createImage(array, w, h, max, true, this.contrastDown, this.contrastUp);
+        this.resultImg = createImage(array, w, h, max, false, 0, 0,0);
+        this.resultSmoothImg = createImage(array, w, h, max, true, this.contrastDown, this.contrastUp, this.smoothKernel);
         
         if(result!=null) result.refreshImage((contrast) ? this.resultSmoothImg : this.resultImg);
         if(sinogram!=null) sinogram.refreshImage(this.sinogramImg);
@@ -573,13 +573,13 @@ public class CT {
                 }
                 if(!onlyResult){
                     if(sinogram!=null) sinogram.refreshImage(sin);
-                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, 0, 0));
+                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, 0, 0, 0));
                 }
             }
         
         
-        this.filteredResultImg = createImage(array, w, h, max, false, 0, 0);
-        this.filteredResultSmoothImg = createImage(array, w, h, max, true, this.contrastDown, this.contrastUp);
+        this.filteredResultImg = createImage(array, w, h, max, false, 0, 0,0);
+        this.filteredResultSmoothImg = createImage(array, w, h, max, true, this.contrastDown, this.contrastUp, this.smoothKernel);
         if(result!=null) result.refreshImage((contrast)?this.filteredResultSmoothImg : this.filteredResultImg);
         if(sinogram!=null) sinogram.refreshImage(this.filteredSinogramImg);
     }
@@ -654,11 +654,11 @@ public class CT {
                 if(pointInCircle(x,y,r)){
                     iter++;
                     double diff = (double)((new Color(img1.getRGB(x, y))).getRed()-(new Color(img2.getRGB(x, y))).getRed());
-                    sum+=Math.pow(diff/255.0,2);
+                    sum+=Math.pow(diff,2);
                 }
             }
         }
-        return sum/iter*100.0;
+        return sum/iter;
     }
     
     public static BufferedImage createSinogram(double[][] arr, int w, int h, double max, double min){
@@ -672,7 +672,7 @@ public class CT {
         return im;
     }
     
-    public static BufferedImage createImage(int[][] arr, int w, int h, int max, boolean withNormalization, double prDown, double prUp){
+    public static BufferedImage createImage(int[][] arr, int w, int h, int max, boolean withNormalization, double prDown, double prUp, int filterKernel){
         BufferedImage im = createBackground(h,w);
         for(int x=0;x<w;x++){
             for(int y=0;y<h;y++){
@@ -682,7 +682,7 @@ public class CT {
                 
             }
         }
-        if(withNormalization) imageNormalization(im, prDown, prUp,0);
+        if(withNormalization) imageNormalization(im, prDown, prUp,filterKernel);
         return im;
     }
     
@@ -691,11 +691,35 @@ public class CT {
     }
     
     private static void imageNormalization(BufferedImage img, double down, double up, int kernel){
-        smoothFilter(img, kernel);
+        if(kernel>0) smoothFilter(img, kernel);
         histogramFilter(img, down, up);
+        //smoothFilter(img, kernel);
     }   
     
-    private static void smoothFilter(BufferedImage img, int kernel){
+    private static void smoothFilter(BufferedImage img, int kernelSize){
+        int d = kernelSize*2+1;
+        int[][] kernel = new int[d][d];
+        double sum = 0.0;
+        for(int i = 0;i<d;i++){
+            for(int j=0;j<d;j++){
+                kernel[i][j] = ((int)(Math.pow(i-kernelSize,2) + Math.pow(j-kernelSize,2)-Math.pow(kernelSize,2)*2))*(-1);
+                sum = sum + kernel[i][j];
+            }
+        }
+        BufferedImage copy = createCopy(img);
+        int h = img.getHeight();
+        int w = img.getWidth();
+        for(int x = kernelSize;x<w-kernelSize;x++){
+            for(int y = kernelSize;y<h-kernelSize;y++){
+                double color = 0.0;
+                for(int i = -kernelSize;i<=kernelSize;i++){
+                    for(int j = -kernelSize;j<=kernelSize;j++){
+                        color = color + ((double)kernel[i+kernelSize][j+kernelSize]*(new Color(copy.getRGB(x+i, y+j))).getRed())/sum;
+                    }
+                }
+                img.setRGB(x, y, greyToRGB((int)color));
+            }
+        }
         
     }
     
