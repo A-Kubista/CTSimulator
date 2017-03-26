@@ -73,12 +73,16 @@ public class CT {
     private double translationAngle;
     /** kąt, na którym rozłożone są sensory używane podczas jednego pomiaru */
     private double measurementAngle;
+    
+    
     /** 1/2 rozmiaru kernela filtrującego sinogram*/
-    private int kernelSize = 9;
+    private int sinogramKernel = 9;
+    /** 1/2 rozmiaru kernela filtrującego rezultat*/
+    private int smoothKernel = 4;
     /** dolna (procentowa) granica odcięcia koloru w rezultacie*/
-    private double contrastDown = 0.1;
+    private double contrastDown = 0.2;
     /** górna (procentowa) granica odcięcia koloru w rezultacie*/
-    private double contrastUp = 0.005;
+    private double contrastUp = 0.995;
     
     /** oryginalny obraz umieszczony na czarnym tle */
     private BufferedImage orginalImg;
@@ -92,12 +96,23 @@ public class CT {
     private BufferedImage resultImg;
     /** aktualny rezultat wygenerowany na podstawie przefiltrowanego sinogramu */
     private BufferedImage filteredResultImg;
+    /** aktualny rezultat wygenerowany na podstawie sinogramu - wygładzony*/
+    private BufferedImage resultSmoothImg;
+    /** aktualny rezultat wygenerowany na podstawie przefiltrowanego sinogramu - wygładzony*/
+    private BufferedImage filteredResultSmoothImg;
+    
+    
+    
     /** tablica zawierająca dane przefiltrowanego sinogramu*/
     private double[][] filteredSinogramArr;
     /** różnica między oryginalnym obrazem a niefiltrowanym rezultatem */
     private double resultDiff = 0.0;
     /** różnica między oryginalnym obrazem a filtrowanym rezultatem */
     private double filteredResultDiff = 0.0;
+    /** różnica między oryginalnym obrazem a niefiltrowanym wygładzonym rezultatem */
+    private double resultSmoothDiff = 0.0;
+    /** różnica między oryginalnym obrazem a filtrowanym wygładzonym rezultatem */
+    private double filteredResultSmoothDiff = 0.0;
     
     /** promień CT (1/2 boku orginalImg */
     private int r;
@@ -129,8 +144,14 @@ public class CT {
         
         createPoints();
         
+        resetImgs();
+    }
+    
+    private void resetImgs(){
         this.resultImg = createBackground(d, d);
         this.filteredResultImg = createBackground(d, d);
+        this.resultSmoothImg = createBackground(d, d);
+        this.filteredResultSmoothImg = createBackground(d, d);
         this.sinogramImg = createBackground(this.maxIterations, this.numberOfSensors);
         this.filteredSinogramImg = createBackground(this.maxIterations, this.numberOfSensors);
     }
@@ -145,27 +166,42 @@ public class CT {
     */
     public CT(BufferedImage img, int nSensors, double tAngle, double mAngle, ImagePanel orginal, ImagePanel gray){
         this(img,nSensors,tAngle,mAngle);
-        orginal.refreshImage(this.orginalImg);
-        gray.refreshImage(this.grayImg);
+        if(orginal!=null) orginal.refreshImage(this.orginalImg);
+        if(gray!=null) gray.refreshImage(this.grayImg);
+    }
+    
+    /**
+     * 
+     * @param result panel, na który ma zostać naniesiony rezultat
+     * @param filteredResult panel, na który ma zostać naniesiony rezultat z przefiltrowanego sinogramu
+     * @param contrast czy prezentowany rezultat został uzyskany z użyciem kontrastu
+     */
+    public void showResult(ImagePanel result, ImagePanel filteredResult, boolean contrast){
+        if(contrast){
+            if(result!=null) result.refreshImage(this.resultSmoothImg);
+            if(filteredResult!=null) filteredResult.refreshImage(this.filteredResultSmoothImg);
+        }
+        else{
+            if(result!=null) result.refreshImage(this.resultImg);
+            if(filteredResult!=null) filteredResult.refreshImage(this.filteredResultImg);
+        }
     }
     
     /**
      * Generowanie całej symulacji. 
      * Wynik zostanie zapisany w odpowienich polach klasy.
-     * @param contrast na widokach końcowych ma zostać zastosowane wyostrzenie
      */
-    public void generateSimulation(boolean contrast){
-        generateSimulation(this.maxIterations, contrast);
+    public void generateSimulation(){
+        generateSimulation(this.maxIterations);
     }
     
     /**
      * Generowanie określonej liczby symulacji. 
      * Wynik zostanie zapisany w odpowienich polach klasy.
      * @param i liczba symulacji
-     * @param contrast na widokach końcowych ma zostać zastosowane wyostrzenie
      */
-    public void generateSimulation(int i, boolean contrast){
-        generateSimulation(i,null,null,null,null,null, true, contrast);
+    public void generateSimulation(int i){
+        generateSimulation(i,null,null,null,null,null, true, false);
     }
     
     /**
@@ -197,16 +233,25 @@ public class CT {
      */
     public void generateSimulation(int i, ImagePanel measurement, ImagePanel sinogram, ImagePanel fSinogram, ImagePanel result, ImagePanel fResult, boolean onlyResult, boolean contrast){
         if(i>this.maxIterations) i = this.maxIterations;
+        resetImgs();
+        
         generateSinogram(i, measurement, sinogram, onlyResult);
         generateResult(i,sinogram,result,onlyResult, contrast);
         filterSinogram(i,sinogram,fSinogram,onlyResult);
         generateFilteredResult(i,fSinogram,fResult,onlyResult, contrast);
         
+        countDiffs();
+    }
+    
+    private void countDiffs(){
         this.resultDiff = countDiff(this.grayImg,this.resultImg);
         this.filteredResultDiff = countDiff(this.grayImg,this.filteredResultImg);
-        
+        this.resultSmoothDiff = countDiff(this.grayImg,this.resultSmoothImg);
+        this.filteredResultSmoothDiff = countDiff(this.grayImg,this.filteredResultSmoothImg);
         System.out.println("Result: "+this.resultDiff+"%");
         System.out.println("Filtered result: "+this.filteredResultDiff+"%");
+        System.out.println("Result - smooth: "+this.resultSmoothDiff+"%");
+        System.out.println("Filtered result - smooth: "+this.filteredResultSmoothDiff+"%");
     }
     
     /**
@@ -389,21 +434,22 @@ public class CT {
                 }
                 if(!onlyResult){
                     if(sinogram!=null) sinogram.refreshImage(sin);
-                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, this.contrastDown, this.contrastUp));
+                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, 0, 0));
                 }
             }
 
-        this.resultImg = createImage(array, w, h, max, contrast, this.contrastDown, this.contrastUp);
-        if(result!=null) result.refreshImage(this.resultImg);
+        this.resultImg = createImage(array, w, h, max, false, 0, 0);
+        this.resultSmoothImg = createImage(array, w, h, max, true, this.contrastDown, this.contrastUp);
+        
+        if(result!=null) result.refreshImage((contrast) ? this.resultSmoothImg : this.resultImg);
         if(sinogram!=null) sinogram.refreshImage(this.sinogramImg);
     }
     
     private void filterSinogram(int n, ImagePanel sinogram, ImagePanel fSinogram, boolean onlyResult){
-        int size = this.kernelSize;
+        int size = this.sinogramKernel;
         double[] h = new double[2*size+1];
         for(int k=-size;k<=size;k++){
             h[k+size] = (k==0) ? 1.0 : ((k%2==0) ? 0 : (-4.0/(Math.pow(k*Math.PI,2))));
-            //System.out.println(k+": "+h[k+size]);
         }
         
         this.filteredSinogramArr = new double[this.numberOfSensors][this.maxIterations];
@@ -527,13 +573,14 @@ public class CT {
                 }
                 if(!onlyResult){
                     if(sinogram!=null) sinogram.refreshImage(sin);
-                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, this.contrastDown, this.contrastUp));
+                    if(result!=null) result.refreshImage(createImage(array, w, h, max, false, 0, 0));
                 }
             }
         
         
-        this.filteredResultImg = createImage(array, w, h, max, contrast, this.contrastDown, this.contrastUp);
-        if(result!=null) result.refreshImage(this.filteredResultImg);
+        this.filteredResultImg = createImage(array, w, h, max, false, 0, 0);
+        this.filteredResultSmoothImg = createImage(array, w, h, max, true, this.contrastDown, this.contrastUp);
+        if(result!=null) result.refreshImage((contrast)?this.filteredResultSmoothImg : this.filteredResultImg);
         if(sinogram!=null) sinogram.refreshImage(this.filteredSinogramImg);
     }
     
@@ -635,12 +682,21 @@ public class CT {
                 
             }
         }
-        if(withNormalization) imageNormalization(im, prDown, prUp);
+        if(withNormalization) imageNormalization(im, prDown, prUp,0);
         return im;
     }
     
-    public static boolean pointInCircle(int x, int y, int r){
+    private static boolean pointInCircle(int x, int y, int r){
         return Math.sqrt(Math.pow(x-r, 2)+Math.pow(y-r,2))<=r;
+    }
+    
+    private static void imageNormalization(BufferedImage img, double down, double up, int kernel){
+        smoothFilter(img, kernel);
+        histogramFilter(img, down, up);
+    }   
+    
+    private static void smoothFilter(BufferedImage img, int kernel){
+        
     }
     
     /**
@@ -649,7 +705,7 @@ public class CT {
      * @param down procent "obciętego" koloru od dołu (ciemne)
      * @param up procent "obciętego" koloru od góry (jasne)
      */
-    public static void imageNormalization(BufferedImage img, double down, double up){
+    public static void histogramFilter(BufferedImage img, double down, double up){
         int h = img.getHeight();
         int w = img.getWidth();
         int r = w/2;
@@ -667,40 +723,30 @@ public class CT {
         int downNumber = (int)(down*((double) size));
         int upNumber = (int)(up*((double) size));
         
-        //System.out.println("("+downNumber + "   " + upNumber+") "+size);
-        
         int downColor = 0;
         int upColor = 255;
         int count = 0;
-        //System.out.println("\n\nDown: "+downNumber);
         for(int i = 0;i<256;i++){
-            //System.out.println(i+"  "+per[i]+"   "+count);
             if(count>downNumber){
                 downColor = i-1;
-                //System.out.println("\t\t"+downColor);
                 break;
             }
             count+=per[i];
         }
-        count = 0;
-        //System.out.println("\n\nUp: "+upNumber);
+        count = size;
         for(int i = 255;i>=0;i--){
-            //System.out.println(i+"  "+per[i]+"   "+count);
-            if(count>upNumber){
+            if(count<upNumber){
                 upColor = i+1;
-                //System.out.println("\t\t"+upColor);
                 break;
             }
-            count+=per[i];
+            count-=per[i];
         }
-        
-        //System.out.println("Normalization: "+downColor+"   "+upColor);
         
         for(int x=0;x<w;x++){
             for(int y=0;y<h;y++){
                 int color = (new Color(img.getRGB(x, y))).getRed();
                 double f = ((double)(color - downColor))/((double)(upColor - downColor));
-                color = (f<0.0) ? 0 : ((f>255.0) ? 255 : (int)(f*255.0));
+                color = (f<=0.0) ? 0 : ((f>=1.0) ? 255 : (int)(f*255.0));
                 img.setRGB(x, y, greyToRGB(color));
             }
         }
@@ -769,6 +815,30 @@ public class CT {
         return filteredResultImg;
     }
 
+    public BufferedImage getResultSmoothImg() {
+        return resultSmoothImg;
+    }
+
+    public BufferedImage getFilteredResultSmoothImg() {
+        return filteredResultSmoothImg;
+    }
+
+    public int getSinogramKernel() {
+        return sinogramKernel;
+    }
+
+    public int getSmoothKernel() {
+        return smoothKernel;
+    }
+
+    public double getContrastDown() {
+        return contrastDown;
+    }
+
+    public double getContrastUp() {
+        return contrastUp;
+    }
+
     public double getResultDiff() {
         return resultDiff;
     }
@@ -776,5 +846,37 @@ public class CT {
     public double getFilteredResultDiff() {
         return filteredResultDiff;
     }
+
+    public double getResultSmoothDiff() {
+        return resultSmoothDiff;
+    }
+
+    public double getFilteredResultSmoothDiff() {
+        return filteredResultSmoothDiff;
+    }
+
+    public int getMaxIterations() {
+        return maxIterations;
+    }
+
+    public void setSinogramKernel(int sinogramKernel) {
+        this.sinogramKernel = sinogramKernel;
+    }
+
+    public void setSmoothKernel(int smoothKernel) {
+        this.smoothKernel = smoothKernel;
+    }
+
+    public void setContrastDown(double contrastDown) {
+        this.contrastDown = contrastDown;
+    }
+
+    public void setContrastUp(double contrastUp) {
+        this.contrastUp = contrastUp;
+    }
+
+    
+    
+    
     
 }
