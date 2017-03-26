@@ -47,9 +47,9 @@ public class ResultWindow extends javax.swing.JFrame implements Runnable{
     }
     
       
-        public void generateSimulation(){
+    public void generateSimulation(){
             CT c = new CT(img,200, 1.0, 150.0, images.get("Orginal"), images.get("GImage"));
-            c.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"), false);
+            c.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"), false, false);
         }
 
     @Override
