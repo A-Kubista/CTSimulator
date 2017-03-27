@@ -22,7 +22,7 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
     private Map<String,SignedPane> images;
     private CTSimulator ct;
     private CT my_simulator;
-        
+    private boolean simulating = false;
     /**
      * Creates new form ResultWindowWithControlls
      */
@@ -38,17 +38,9 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
         this.img = img;
         this.ct = ct;
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        this.setLayout(new GridLayout(2,3,20,5));
+        jPanelImages.setLayout(new GridLayout(3,3,20,5));
         
         
-        jSliderIterations.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if(!jSliderIterations.getValueIsAdjusting())
-                    generateSimulation();
-                    System.out.println("Odpalam symulacje dla " + jSliderIterations.getValue() + " iteracji");
-            }
-        });
         
         images = new HashMap();
         images.put("Orginal", new SignedPane("Orginal image"));
@@ -58,12 +50,12 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
         images.put("Result", new SignedPane("Result image"));
         images.put("FResult", new SignedPane("Filtered result image"));
         
-        add(images.get("Orginal"));
-        add(images.get("Sinogram"));
-        add(images.get("FSinogram"));
-        add(images.get("GImage"));
-        add(images.get("Result"));
-        add(images.get("FResult"));
+        jPanelImages.add(images.get("Orginal"));
+        jPanelImages.add(images.get("Sinogram"));
+        jPanelImages.add(images.get("FSinogram"));
+        jPanelImages.add(images.get("GImage"));
+        jPanelImages.add(images.get("Result"));
+        jPanelImages.add(images.get("FResult"));
         
         
         pack();
@@ -73,18 +65,41 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
         jSliderIterations.setMinimum(0);
         jSliderIterations.setMaximum(my_simulator.getMaxIterations());
         jSliderIterations.setValue(jSliderIterations.getMaximum());
+        jLabelIterationsInfo.setText("Ilość iteracji " + jSliderIterations.getValue());
+             jSliderIterations.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if(!jSliderIterations.getValueIsAdjusting()){
+                    
+                   new Thread() {
+                        @Override
+                        public void run() {
+                           generateSimulation();
+                           jLabelIterationsInfo.setText("Ilość iteracji " + jSliderIterations.getValue());
+                           System.out.println(jSliderIterations.getValue() );
+                        }
+                    }.start();
+                }
+            }
+        });
+        
            
     }
     
       
     public void generateSimulation(){
+        if(!simulating){
+            simulating = true;
             int iteration_index = jSliderIterations.getValue();
+            System.out.println("Odpalam symulacje dla " + jSliderIterations.getValue() + " iteracji");
             my_simulator.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"), false, false,iteration_index);
         }
+        simulating  = false;
+    }
 
     @Override
     public void run() {
-        generateSimulation();
+        //generateSimulation();
     }
     
     /**
@@ -99,6 +114,8 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
         jSliderIterations = new javax.swing.JSlider();
         jCheckBox1 = new javax.swing.JCheckBox();
         jCheckBox2 = new javax.swing.JCheckBox();
+        jPanelImages = new javax.swing.JPanel();
+        jLabelIterationsInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -106,30 +123,54 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
 
         jCheckBox2.setText("jCheckBox2");
 
+        javax.swing.GroupLayout jPanelImagesLayout = new javax.swing.GroupLayout(jPanelImages);
+        jPanelImages.setLayout(jPanelImagesLayout);
+        jPanelImagesLayout.setHorizontalGroup(
+            jPanelImagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        jPanelImagesLayout.setVerticalGroup(
+            jPanelImagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 209, Short.MAX_VALUE)
+        );
+
+        jLabelIterationsInfo.setText("0");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(66, 66, 66)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGap(50, 50, 50)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jCheckBox1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 59, Short.MAX_VALUE)
+                        .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jCheckBox2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jCheckBox2))
-                    .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(134, Short.MAX_VALUE))
+                        .addComponent(jLabelIterationsInfo)
+                        .addGap(91, 91, 91))))
+            .addComponent(jPanelImages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(165, Short.MAX_VALUE)
-                .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jPanelImages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jCheckBox1)
-                    .addComponent(jCheckBox2))
-                .addGap(68, 68, 68))
+                    .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(7, 7, 7)
+                        .addComponent(jCheckBox2))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabelIterationsInfo)))
+                .addGap(24, 24, 24))
         );
 
         pack();
@@ -173,6 +214,8 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JCheckBox jCheckBox2;
+    private javax.swing.JLabel jLabelIterationsInfo;
+    private javax.swing.JPanel jPanelImages;
     private javax.swing.JSlider jSliderIterations;
     // End of variables declaration//GEN-END:variables
 }

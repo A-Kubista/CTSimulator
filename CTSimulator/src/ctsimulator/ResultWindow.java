@@ -25,7 +25,6 @@ public class ResultWindow extends javax.swing.JFrame implements Runnable{
         this.img = img;
         this.ct = ct;
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        this.setLayout(new GridLayout(3,3,20,5));
         
         images = new HashMap();
         images.put("Orginal", new SignedPane("Orginal image"));
