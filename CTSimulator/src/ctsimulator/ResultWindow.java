@@ -25,7 +25,7 @@ public class ResultWindow extends javax.swing.JFrame implements Runnable{
         this.img = img;
         this.ct = ct;
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        this.setLayout(new GridLayout(2,3,20,5));
+        this.setLayout(new GridLayout(3,3,20,5));
         
         images = new HashMap();
         images.put("Orginal", new SignedPane("Orginal image"));
@@ -42,6 +42,7 @@ public class ResultWindow extends javax.swing.JFrame implements Runnable{
         add(images.get("Result"));
         add(images.get("FResult"));
         
+        
         pack();
         this.setVisible(true);
     }
@@ -49,7 +50,7 @@ public class ResultWindow extends javax.swing.JFrame implements Runnable{
       
     public void generateSimulation(){
             CT c = new CT(img,200, 1.0, 150.0, images.get("Orginal"), images.get("GImage"));
-            c.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"), false, false);
+            c.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"), false, false,200);
         }
 
     @Override
