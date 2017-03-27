@@ -215,8 +215,10 @@ public class CT {
      * @param onlyResult pokazywany ma być jedynie końcowy rezultat danego obrazu (sinogramu, przefiltrowanego sinogramu itp.), bez kroków pośrwdnich
      * @param contrast na widokach końcowych ma zostać zastosowane wyostrzenie
      */
-    public void generateSimulation(ImagePanel measurement, ImagePanel sinogram, ImagePanel fSinogram, ImagePanel result, ImagePanel fResult, boolean onlyResult, boolean contrast){
-        generateSimulation(this.maxIterations,measurement, sinogram, fSinogram, result, fResult, onlyResult, contrast);
+    public void generateSimulation(ImagePanel measurement, ImagePanel sinogram, ImagePanel fSinogram, ImagePanel result, ImagePanel fResult, boolean onlyResult, boolean contrast, int iteraton_index){
+        if(iteraton_index > this.maxIterations)
+            iteraton_index = this.maxIterations;
+        generateSimulation(iteraton_index,measurement, sinogram, fSinogram, result, fResult, onlyResult, contrast);
     }
     
     /**

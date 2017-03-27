@@ -227,7 +227,8 @@ public class MainWindow extends javax.swing.JFrame {
             //if(img.getWidth()!=img.getHeight()) throw new Exception("Incorrect image size - "+img.getHeight()+"x"+img.getWidth());
             ct.setR((int)(img.getHeight()/2));
             java.awt.EventQueue.invokeLater(() -> {
-                ResultWindow res = new ResultWindow(img,ct.clone());
+             //   ResultWindow res = new ResultWindow(img,ct.clone());
+                ResultWindowWithControlls res = new ResultWindowWithControlls(img,ct.clone());
                 (new Thread(res)).start();
             });
             
