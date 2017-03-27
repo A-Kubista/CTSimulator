@@ -19,7 +19,6 @@ public class DICOMGenerator {
      * @param date data wykonania badania w formacie "yyyy-mm-dd-hh-mm"
      */
     public DICOMGenerator(CT simulation, String name, String pesel, String date){
-        
     }
     
 }
