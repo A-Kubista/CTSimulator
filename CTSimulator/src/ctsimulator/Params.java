@@ -12,6 +12,48 @@ package ctsimulator;
 public class Params {
 
     /**
+     * @return the patient_id
+     */
+    public String getPatient_id() {
+        return patient_id;
+    }
+
+    /**
+     * @param patient_id the patient_id to set
+     */
+    public void setPatient_id(String patient_id) {
+        this.patient_id = patient_id;
+    }
+
+    /**
+     * @return the patient_name
+     */
+    public String getPatient_name() {
+        return patient_name;
+    }
+
+    /**
+     * @param patient_name the patient_name to set
+     */
+    public void setPatient_name(String patient_name) {
+        this.patient_name = patient_name;
+    }
+
+    /**
+     * @return the date
+     */
+    public String getDate() {
+        return date;
+    }
+
+    /**
+     * @param date the date to set
+     */
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    /**
      * @return the nSensors
      */
     public int getnSensors() {
@@ -61,7 +103,9 @@ public class Params {
     private int nSensors = 200;
     private double tAngle = 1.0;
     private double mAngle = 150;
-    
+    private String patient_id = "pesel";
+    private String patient_name = "imie i nazwisko";
+    private String date = "data";
     
     private Params() {
     }
@@ -69,6 +113,7 @@ public class Params {
     public static Params getInstance() {
         return ParamsHolder.INSTANCE;
     }
+
     
     private static class ParamsHolder {
 

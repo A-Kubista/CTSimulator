@@ -97,6 +97,11 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
                     int iteration_index = jSliderIterations.getValue();
                     System.out.println("Odpalam symulacje dla " + jSliderIterations.getValue() + " iteracji");
                     my_simulator.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"),filtering , contrast,iteration_index);
+                    DICOMGenerator.DICOMGenerator(my_simulator,
+                            Params.getInstance().getPatient_name(), 
+                            Params.getInstance().getPatient_id(), 
+                            Params.getInstance().getDate()
+                    );
                 }
            }.start();
         }
