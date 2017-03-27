@@ -116,7 +116,6 @@ public class Params {
 
     
     private static class ParamsHolder {
-
         private static final Params INSTANCE = new Params();
     }
 }
