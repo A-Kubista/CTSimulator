@@ -6,20 +6,29 @@
 package ctsimulator;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
- * @author LU
+ * @author LU && AL
+ * 
  */
 public class MainWindow extends javax.swing.JFrame {
 
     private final CTSimulator ct;
-    
+    private File file;
     public MainWindow() {
         initComponents();
+        jFileChooser.addChoosableFileFilter(new FileNameExtensionFilter("image", "jpg","png","bmp"));
+        jFileChooser.setAcceptAllFileFilterUsed(false);
+        tAngle.setText("" + Params.getInstance().gettAngle());
+        angleBetweenSensors.setText("" + Params.getInstance().getmAngle());
+        sensorsPerMeasurement.setText("" + Params.getInstance().getnSensors());
+        tAngle.setText("" + Params.getInstance().gettAngle());
         ct = new CTSimulator();
     }
     
@@ -38,22 +47,19 @@ public class MainWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jFileChooser1 = new javax.swing.JFileChooser();
         tabbedPane = new javax.swing.JTabbedPane();
         filePane = new javax.swing.JPanel();
-        fileLabel = new javax.swing.JLabel();
-        fileText = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         errorFile = new javax.swing.JLabel();
+        jFileChooser = new javax.swing.JFileChooser();
         optionPane = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         sensorsPerMeasurement = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         angleBetweenSensors = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        numberOfMeasurements = new javax.swing.JTextField();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
+        tAngle = new javax.swing.JTextField();
         save = new javax.swing.JToggleButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -62,15 +68,6 @@ public class MainWindow extends javax.swing.JFrame {
         tabbedPane.setToolTipText("Option");
 
         filePane.setToolTipText("Select file");
-
-        fileLabel.setText("Selected file:");
-
-        fileText.setText("img/test.png");
-        fileText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fileTextActionPerformed(evt);
-            }
-        });
 
         jButton1.setText("Start simulation");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -81,35 +78,39 @@ public class MainWindow extends javax.swing.JFrame {
 
         errorFile.setForeground(new java.awt.Color(204, 0, 0));
 
+        jFileChooser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jFileChooserActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout filePaneLayout = new javax.swing.GroupLayout(filePane);
         filePane.setLayout(filePaneLayout);
         filePaneLayout.setHorizontalGroup(
             filePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(filePaneLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(fileLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(filePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(errorFile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(fileText, javax.swing.GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE))
+                .addComponent(jFileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 466, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(errorFile, javax.swing.GroupLayout.DEFAULT_SIZE, 18, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(filePaneLayout.createSequentialGroup()
-                .addGap(171, 171, 171)
+                .addGap(187, 187, 187)
                 .addComponent(jButton1)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         filePaneLayout.setVerticalGroup(
             filePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(filePaneLayout.createSequentialGroup()
-                .addGap(68, 68, 68)
-                .addGroup(filePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fileLabel)
-                    .addComponent(fileText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(errorFile)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(filePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(filePaneLayout.createSequentialGroup()
+                        .addGap(91, 91, 91)
+                        .addComponent(errorFile))
+                    .addGroup(filePaneLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jFileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
                 .addComponent(jButton1)
-                .addContainerGap(75, Short.MAX_VALUE))
+                .addContainerGap(54, Short.MAX_VALUE))
         );
 
         tabbedPane.addTab("Select file", filePane);
@@ -118,21 +119,27 @@ public class MainWindow extends javax.swing.JFrame {
 
         jLabel1.setText("Number of active sensors per measurement:");
 
-        jLabel2.setText("Angle between sensors (degree):");
-
-        jLabel3.setText("Number of measurements:");
-
-        numberOfMeasurements.addActionListener(new java.awt.event.ActionListener() {
+        sensorsPerMeasurement.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                numberOfMeasurementsActionPerformed(evt);
+                sensorsPerMeasurementActionPerformed(evt);
             }
         });
 
-        jLabel6.setText("Active angle (degree):");
+        jLabel2.setText("Angle between sensors (degree):");
 
-        jLabel7.setText("Number of sensors:");
+        angleBetweenSensors.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                angleBetweenSensorsActionPerformed(evt);
+            }
+        });
 
-        jLabel8.setText("Trenslation:");
+        jLabel3.setText("Angle between iterations");
+
+        tAngle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tAngleActionPerformed(evt);
+            }
+        });
 
         save.setText("Save");
         save.addActionListener(new java.awt.event.ActionListener() {
@@ -148,50 +155,36 @@ public class MainWindow extends javax.swing.JFrame {
             .addGroup(optionPaneLayout.createSequentialGroup()
                 .addGap(21, 21, 21)
                 .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(optionPaneLayout.createSequentialGroup()
-                        .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(numberOfMeasurements, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
-                            .addComponent(angleBetweenSensors)
-                            .addComponent(sensorsPerMeasurement, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(optionPaneLayout.createSequentialGroup()
-                        .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(save, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE))))
-                .addContainerGap())
+                    .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(tAngle, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
+                        .addComponent(angleBetweenSensors)
+                        .addComponent(sensorsPerMeasurement, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(save, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE))))
+                .addContainerGap(240, Short.MAX_VALUE))
         );
         optionPaneLayout.setVerticalGroup(
             optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(optionPaneLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel6))
+                .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sensorsPerMeasurement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel7))
+                .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(angleBetweenSensors, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel8))
+                .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(numberOfMeasurements, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tAngle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(save)
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(193, Short.MAX_VALUE))
         );
 
         tabbedPane.addTab("Option", optionPane);
@@ -203,14 +196,13 @@ public class MainWindow extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(tabbedPane)
-                .addContainerGap())
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane)
-                .addContainerGap())
+                .addComponent(tabbedPane))
         );
 
         tabbedPane.getAccessibleContext().setAccessibleName("Option");
@@ -219,11 +211,9 @@ public class MainWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        String path = fileText.getText();
+
         try {
-            FileInputStream fos = new FileInputStream(path);
-            BufferedImage img = ImageIO.read(fos);
-            fos.close();
+            BufferedImage img = ImageIO.read(file);
             //if(img.getWidth()!=img.getHeight()) throw new Exception("Incorrect image size - "+img.getHeight()+"x"+img.getWidth());
             ct.setR((int)(img.getHeight()/2));
             java.awt.EventQueue.invokeLater(() -> {
@@ -232,43 +222,49 @@ public class MainWindow extends javax.swing.JFrame {
                 (new Thread(res)).start();
             });
             
-        } catch (IOException ex) {
-            this.errorFile.setText("Image "+path+" can't be found.");
         } catch (Exception ex) {
             this.errorFile.setText(ex.getMessage());
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void fileTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileTextActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_fileTextActionPerformed
-
-    private void numberOfMeasurementsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfMeasurementsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_numberOfMeasurementsActionPerformed
+    private void jFileChooserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFileChooserActionPerformed
+        file = jFileChooser.getSelectedFile();
+    }//GEN-LAST:event_jFileChooserActionPerformed
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_saveActionPerformed
 
+    private void tAngleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tAngleActionPerformed
+        // TODO add your handling code here:
+        Params.getInstance().settAngle(Integer.parseInt(tAngle.getText()));
+    }//GEN-LAST:event_tAngleActionPerformed
+
+    private void sensorsPerMeasurementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sensorsPerMeasurementActionPerformed
+        // TODO add your handling code here:
+        Params.getInstance().setnSensors(Integer.parseInt(sensorsPerMeasurement.getText()));
+    }//GEN-LAST:event_sensorsPerMeasurementActionPerformed
+
+    private void angleBetweenSensorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_angleBetweenSensorsActionPerformed
+        // TODO add your handling code here:
+        Params.getInstance().setmAngle(Integer.parseInt(angleBetweenSensors.getText()));
+    }//GEN-LAST:event_angleBetweenSensorsActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField angleBetweenSensors;
     private javax.swing.JLabel errorFile;
-    private javax.swing.JLabel fileLabel;
     private javax.swing.JPanel filePane;
-    private javax.swing.JTextField fileText;
     private javax.swing.JButton jButton1;
+    private javax.swing.JFileChooser jFileChooser;
+    private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JTextField numberOfMeasurements;
     private javax.swing.JPanel optionPane;
     private javax.swing.JToggleButton save;
     private javax.swing.JTextField sensorsPerMeasurement;
+    private javax.swing.JTextField tAngle;
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
 }

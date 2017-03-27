@@ -23,6 +23,8 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
     private CTSimulator ct;
     private CT my_simulator;
     private boolean simulating = false;
+    private boolean contrast = false;
+    private boolean filtering = false;
     /**
      * Creates new form ResultWindowWithControlls
      */
@@ -61,7 +63,12 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
         pack();
         this.setVisible(true);
         
-        my_simulator = new CT(img,200, 1.0, 150.0, images.get("Orginal"), images.get("GImage"));
+        my_simulator = new CT(img,Params.getInstance().getnSensors(),
+                Params.getInstance().gettAngle(),
+                Params.getInstance().getmAngle(),
+                images.get("Orginal"),
+                images.get("GImage")
+        );
         jSliderIterations.setMinimum(0);
         jSliderIterations.setMaximum(my_simulator.getMaxIterations());
         jSliderIterations.setValue(jSliderIterations.getMaximum());
@@ -69,16 +76,10 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
              jSliderIterations.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
+                 jLabelIterationsInfo.setText("Ilość iteracji " + jSliderIterations.getValue());
                 if(!jSliderIterations.getValueIsAdjusting()){
-                    
-                   new Thread() {
-                        @Override
-                        public void run() {
                            generateSimulation();
-                           jLabelIterationsInfo.setText("Ilość iteracji " + jSliderIterations.getValue());
                            System.out.println(jSliderIterations.getValue() );
-                        }
-                    }.start();
                 }
             }
         });
@@ -89,10 +90,15 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
       
     public void generateSimulation(){
         if(!simulating){
-            simulating = true;
-            int iteration_index = jSliderIterations.getValue();
-            System.out.println("Odpalam symulacje dla " + jSliderIterations.getValue() + " iteracji");
-            my_simulator.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"), false, false,iteration_index);
+            new Thread() {
+                @Override
+                public void run() {
+                    simulating = true;
+                    int iteration_index = jSliderIterations.getValue();
+                    System.out.println("Odpalam symulacje dla " + jSliderIterations.getValue() + " iteracji");
+                    my_simulator.generateSimulation(images.get("GImage"), images.get("Sinogram"), images.get("FSinogram"), images.get("Result"), images.get("FResult"),filtering , contrast,iteration_index);
+                }
+           }.start();
         }
         simulating  = false;
     }
@@ -119,9 +125,19 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jCheckBox1.setText("jCheckBox1");
+        jCheckBox1.setText("pokaż wyniki pośrednie");
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
 
-        jCheckBox2.setText("jCheckBox2");
+        jCheckBox2.setText("kontrast");
+        jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox2ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanelImagesLayout = new javax.swing.GroupLayout(jPanelImages);
         jPanelImages.setLayout(jPanelImagesLayout);
@@ -131,7 +147,7 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
         );
         jPanelImagesLayout.setVerticalGroup(
             jPanelImagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 209, Short.MAX_VALUE)
+            .addGap(0, 207, Short.MAX_VALUE)
         );
 
         jLabelIterationsInfo.setText("0");
@@ -145,36 +161,48 @@ public class ResultWindowWithControlls extends javax.swing.JFrame implements Run
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jCheckBox1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 59, Short.MAX_VALUE)
-                        .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jCheckBox2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabelIterationsInfo)
-                        .addGap(91, 91, 91))))
+                        .addGap(106, 106, 106))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jCheckBox2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 75, Short.MAX_VALUE)
+                        .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
             .addComponent(jPanelImages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jPanelImages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCheckBox1)
-                    .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(7, 7, 7)
-                        .addComponent(jCheckBox2))
+                        .addComponent(jPanelImages, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSliderIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabelIterationsInfo)))
-                .addGap(24, 24, 24))
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jCheckBox2)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelIterationsInfo)
+                    .addComponent(jCheckBox1))
+                .addGap(29, 29, 29))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        // TODO add your handling code here:
+        filtering = jCheckBox1.isSelected();
+            
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
+
+    private void jCheckBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox2ActionPerformed
+        // TODO add your handling code here:
+         contrast = jCheckBox2.isSelected();
+         generateSimulation();
+    }//GEN-LAST:event_jCheckBox2ActionPerformed
 
     /**
      * @param args the command line arguments
