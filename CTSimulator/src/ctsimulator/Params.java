@@ -101,7 +101,7 @@ public class Params {
     */
     
     private int nSensors = 200;
-    private double tAngle = 1.0;
+    private double tAngle = 1;
     private double mAngle = 150;
     private String patient_id = "pesel";
     private String patient_name = "imie i nazwisko";

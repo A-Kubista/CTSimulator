@@ -804,7 +804,7 @@ public class CT {
     }
     
     private static BufferedImage createBackground(int h, int w){
-        BufferedImage tmp = new BufferedImage(w,h,BufferedImage.TYPE_INT_ARGB);
+        BufferedImage tmp = new BufferedImage(w,h,BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = tmp.createGraphics();
         graphics.setPaint ( new Color ( 0, 0, 0 ) );
         graphics.fillRect ( 0, 0, tmp.getWidth(), tmp.getHeight() );

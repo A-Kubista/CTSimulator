@@ -42,7 +42,7 @@ public class DICOMGenerator {
     // retrieve image
             BufferedImage bi = simulation.getFilteredResultImg();
             File outputfile = new File("contrast.jpg");
-            ImageIO.write(bi, "png", outputfile);
+            ImageIO.write(bi, "jpg", outputfile);
             } catch (IOException e) {
 
             }
@@ -53,8 +53,8 @@ public class DICOMGenerator {
         	//generate the DICOM file from the jpeg file and the other attributes supplied
 			new ImageToDicom(scJpegFilePath, //path to existing JPEG image 
 					         newDicomFile, //output DICOM file with full path
-					         name, //name of patient
-					         pesel, //patient id
+					         Params.getInstance().getPatient_name(), //name of patient
+					         Params.getInstance().getPatient_id(), //patient id
 					         "id badania", //study id
 					         "seria", //series number
 					         "instacja"); //instance number

@@ -5,11 +5,25 @@
  */
 package ctsimulator;
 
+import com.pixelmed.dicom.Attribute;
+import com.pixelmed.dicom.AttributeList;
+import com.pixelmed.dicom.CodingSchemeIdentification;
+import com.pixelmed.dicom.DicomException;
+import com.pixelmed.dicom.FileMetaInformation;
+import com.pixelmed.dicom.TagFromName;
+import com.pixelmed.dicom.TransferSyntax;
+import com.pixelmed.display.SingleImagePanel;
+import com.pixelmed.display.SourceImage;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
@@ -21,9 +35,12 @@ public class MainWindow extends javax.swing.JFrame {
 
     private final CTSimulator ct;
     private File file;
+    private boolean dicome_mode = false;
+    
     public MainWindow() {
         initComponents();
         jFileChooser.addChoosableFileFilter(new FileNameExtensionFilter("image", "jpg","png","bmp"));
+        jFileChooser.addChoosableFileFilter(new FileNameExtensionFilter("dicom", "dicom","dcm"));
         jFileChooser.setAcceptAllFileFilterUsed(false);
         tAngle.setText("" + Params.getInstance().gettAngle());
         angleBetweenSensors.setText("" + Params.getInstance().getmAngle());
@@ -66,6 +83,11 @@ public class MainWindow extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         patientId = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        jname = new javax.swing.JLabel();
+        jid = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jDate = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("CTSimulator");
@@ -212,7 +234,7 @@ public class MainWindow extends javax.swing.JFrame {
                     .addGroup(optionPaneLayout.createSequentialGroup()
                         .addComponent(jLabel6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(patientId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(patientId, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(optionPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(optionPaneLayout.createSequentialGroup()
@@ -236,6 +258,53 @@ public class MainWindow extends javax.swing.JFrame {
 
         tabbedPane.addTab("Options", optionPane);
 
+        jname.setText("name");
+
+        jid.setText("id");
+
+        jDate.setText("date");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(jDate, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(jDate)
+                .addGap(0, 285, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jname, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(361, Short.MAX_VALUE))
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jid, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jname)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jid)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        tabbedPane.addTab("Dicomstats", jPanel1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -257,56 +326,94 @@ public class MainWindow extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void patientIdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_patientIdActionPerformed
+        // TODO add your handling code here:
+        Params.getInstance().setPatient_id(patientId.getText());
+    }//GEN-LAST:event_patientIdActionPerformed
 
-        try {
-            BufferedImage img = ImageIO.read(file);
-            //if(img.getWidth()!=img.getHeight()) throw new Exception("Incorrect image size - "+img.getHeight()+"x"+img.getWidth());
-            ct.setR((int)(img.getHeight()/2));
-            java.awt.EventQueue.invokeLater(() -> {
-             //   ResultWindow res = new ResultWindow(img,ct.clone());
-                ResultWindowWithControlls res = new ResultWindowWithControlls(img,ct.clone());
-                (new Thread(res)).start();
-            });
-            
-        } catch (Exception ex) {
-            this.errorFile.setText(ex.getMessage());
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void patientNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_patientNameActionPerformed
+        // TODO add your handling code here:
+        Params.getInstance().setPatient_name(patientName.getText());
+    }//GEN-LAST:event_patientNameActionPerformed
 
-    private void jFileChooserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFileChooserActionPerformed
-        file = jFileChooser.getSelectedFile();
-    }//GEN-LAST:event_jFileChooserActionPerformed
+    private void dateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateActionPerformed
+        // TODO add your handling code here:
+        Params.getInstance().setDate(date.getText());
+    }//GEN-LAST:event_dateActionPerformed
 
     private void tAngleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tAngleActionPerformed
         // TODO add your handling code here:
         Params.getInstance().settAngle(Integer.parseInt(tAngle.getText()));
     }//GEN-LAST:event_tAngleActionPerformed
 
-    private void sensorsPerMeasurementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sensorsPerMeasurementActionPerformed
-        // TODO add your handling code here:
-        Params.getInstance().setnSensors(Integer.parseInt(sensorsPerMeasurement.getText()));
-    }//GEN-LAST:event_sensorsPerMeasurementActionPerformed
-
     private void angleBetweenSensorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_angleBetweenSensorsActionPerformed
         // TODO add your handling code here:
         Params.getInstance().setmAngle(Integer.parseInt(angleBetweenSensors.getText()));
     }//GEN-LAST:event_angleBetweenSensorsActionPerformed
 
-    private void dateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateActionPerformed
+    private void sensorsPerMeasurementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sensorsPerMeasurementActionPerformed
         // TODO add your handling code here:
-          Params.getInstance().setDate(date.getText());
-    }//GEN-LAST:event_dateActionPerformed
+        Params.getInstance().setnSensors(Integer.parseInt(sensorsPerMeasurement.getText()));
+    }//GEN-LAST:event_sensorsPerMeasurementActionPerformed
 
-    private void patientNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_patientNameActionPerformed
-        // TODO add your handling code here:
-          Params.getInstance().setPatient_name(patientName.getText());
-    }//GEN-LAST:event_patientNameActionPerformed
+    private void jFileChooserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFileChooserActionPerformed
+        file = jFileChooser.getSelectedFile();
+        if(jFileChooser.getFileFilter().getDescription().equals("image"))
+        dicome_mode = false;
+        else{
+            dicome_mode = true;
+            try {
+                SingleImagePanel image = new SingleImagePanel(new SourceImage(file.getName()));
+                JFrame p = new JFrame();
+                p.add(image);
+                p.setBackground(Color.BLACK);
+                p.setSize(512,512);
+                p.setVisible(true);
+                AttributeList list = new AttributeList();
+                list.read(file);
+                String patientName=Attribute.getSingleStringValueOrNull(list,TagFromName.PatientName);
+                String pateintId=Attribute.getSingleStringValueOrNull(list,TagFromName.PatientID);
+                String date=Attribute.getSingleStringValueOrNull(list,TagFromName.Date);
+                jDate.setText("data " + date);
+                jid.setText("id " + pateintId);
+                jname.setText("imie i nazwisko " + patientName);
+                System.err.print(list);
+            } catch (IOException ex) {
+                Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (DicomException ex) {
+                Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
-    private void patientIdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_patientIdActionPerformed
-        // TODO add your handling code here:
+        }
+    }//GEN-LAST:event_jFileChooserActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        if(!dicome_mode){
         Params.getInstance().setPatient_id(patientId.getText());
-    }//GEN-LAST:event_patientIdActionPerformed
+        Params.getInstance().setPatient_name(patientName.getText());                                   
+        Params.getInstance().setDate(date.getText());
+        Params.getInstance().settAngle(Integer.parseInt(tAngle.getText()));
+        Params.getInstance().setmAngle(Integer.parseInt(angleBetweenSensors.getText()));
+        Params.getInstance().setnSensors(Integer.parseInt(sensorsPerMeasurement.getText()));
+            
+            try {
+                BufferedImage img = ImageIO.read(file);
+                //if(img.getWidth()!=img.getHeight()) throw new Exception("Incorrect image size - "+img.getHeight()+"x"+img.getWidth());
+
+                ct.setR((int)(img.getHeight()/2));
+                java.awt.EventQueue.invokeLater(() -> {
+                    //   ResultWindow res = new ResultWindow(img,ct.clone());
+                    ResultWindowWithControlls res = new ResultWindowWithControlls(img,ct.clone());
+                    (new Thread(res)).start();
+                });
+
+            } catch (Exception ex) {
+                this.errorFile.setText(ex.getMessage());
+            }
+        }else{
+            tabbedPane.setSelectedIndex(2);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -315,6 +422,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JLabel errorFile;
     private javax.swing.JPanel filePane;
     private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jDate;
     private javax.swing.JFileChooser jFileChooser;
     private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabel1;
@@ -323,6 +431,10 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JLabel jid;
+    private javax.swing.JLabel jname;
     private javax.swing.JPanel optionPane;
     private javax.swing.JTextField patientId;
     private javax.swing.JTextField patientName;
